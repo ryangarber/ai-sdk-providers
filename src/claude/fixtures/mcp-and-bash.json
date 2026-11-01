@@ -1,0 +1,979 @@
+[
+	{
+		"type": "message",
+		"message": {
+			"type": "system",
+			"subtype": "init",
+			"cwd": "/private/tmp/cc-spike",
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"tools": ["Bash", "mcp__ai-sdk__get_weather"],
+			"model": "claude-haiku-5-5",
+			"uuid": "3741c90e-ded0-4c66-b0b1-a319ed6d2e44"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "message_start",
+				"message": {
+					"model": "claude-haiku-5-5",
+					"id": "msg_011CggRiKgpigb93tK6ra1Fs",
+					"type": "message",
+					"role": "assistant",
+					"content": [],
+					"container": null,
+					"stop_reason": null,
+					"stop_sequence": null,
+					"stop_details": null,
+					"usage": {
+						"input_tokens": 2,
+						"cache_creation_input_tokens": 2633,
+						"cache_read_input_tokens": 0,
+						"cache_creation": {
+							"ephemeral_5m_input_tokens": 0,
+							"ephemeral_1h_input_tokens": 2633
+						},
+						"output_tokens": 32,
+						"service_tier": "standard",
+						"inference_geo": "global",
+						"speed": "standard"
+					},
+					"input_transformations": [],
+					"diagnostics": null,
+					"context_management": null
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "fcba78a7-9191-4cd7-bb57-8f0dd3cb1863",
+			"ttft_ms": 719,
+			"thinking_display": "updates",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_start",
+				"index": 0,
+				"content_block": {
+					"type": "tool_use",
+					"id": "toolu_01E1WdDXarCxnWr6buD9CKzH",
+					"name": "mcp__ai-sdk__get_weather",
+					"input": {},
+					"caller": {
+						"type": "direct"
+					}
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "0e0d0c1a-7c62-4179-a925-b117dce2006e",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 0,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": ""
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "1c2c40d5-93fc-4609-9103-6fab13fbb974",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 0,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": "{\"city\": \"Paris"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "a9acf817-0937-4e73-a13b-7cc658cc6121",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 0,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": "\"}"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "35feb53b-3fa4-428d-aba0-1efe3a0e35b6",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "assistant",
+			"message": {
+				"model": "claude-haiku-5-5",
+				"id": "msg_011CggRiKgpigb93tK6ra1Fs",
+				"type": "message",
+				"role": "assistant",
+				"content": [
+					{
+						"type": "tool_use",
+						"id": "toolu_01E1WdDXarCxnWr6buD9CKzH",
+						"name": "mcp__ai-sdk__get_weather",
+						"input": {
+							"city": "Paris"
+						},
+						"caller": {
+							"type": "direct"
+						}
+					}
+				],
+				"container": null,
+				"stop_reason": null,
+				"stop_sequence": null,
+				"stop_details": null,
+				"usage": {
+					"input_tokens": 2,
+					"cache_creation_input_tokens": 2633,
+					"cache_read_input_tokens": 0,
+					"cache_creation": {
+						"ephemeral_5m_input_tokens": 0,
+						"ephemeral_1h_input_tokens": 2633
+					},
+					"output_tokens": 32,
+					"service_tier": "standard",
+					"inference_geo": "global",
+					"speed": "standard"
+				},
+				"input_transformations": [],
+				"diagnostics": null,
+				"context_management": null
+			},
+			"parent_tool_use_id": null,
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"uuid": "b0a61097-ce22-449e-bfa8-f560e02f47f1",
+			"timestamp": "2026-11-03T17:57:08.316Z",
+			"request_id": "req_011CggRiKSwRVnWZ5ALEAbPQ",
+			"wire_tool_inputs": {
+				"toolu_01E1WdDXarCxnWr6buD9CKzH": {
+					"city": "Paris"
+				}
+			},
+			"tool_use_meta": [
+				{
+					"id": "toolu_01E1WdDXarCxnWr6buD9CKzH",
+					"display_name": "Get Weather",
+					"server_display_name": "ai-sdk",
+					"tool_name": "get_weather"
+				}
+			]
+		}
+	},
+	{
+		"type": "tool-start",
+		"toolUseId": "toolu_01E1WdDXarCxnWr6buD9CKzH",
+		"name": "mcp__ai-sdk__get_weather"
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_stop",
+				"index": 0
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "0a2b36e7-01f6-47fd-af74-5155accfa9a1",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_start",
+				"index": 1,
+				"content_block": {
+					"type": "tool_use",
+					"id": "toolu_01SfpGmPtD2MBXJaN7vT8Hd1",
+					"name": "Bash",
+					"input": {},
+					"caller": {
+						"type": "direct"
+					}
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "b7975b03-59d3-40b0-add6-2e41851618c4",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 1,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": ""
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "ca3486f2-b767-4d97-b8b3-3c96132d0b86",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "tool-call",
+		"id": "q-mcp",
+		"toolUseId": "toolu_01E1WdDXarCxnWr6buD9CKzH",
+		"name": "get_weather",
+		"input": {
+			"city": "Paris"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 1,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": "{\"command\": \"echo h"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "aba41c33-9028-498f-8147-9c34d00cd358",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 1,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": "i"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "5171363f-8175-4901-86af-424e85b924b5",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 1,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": "\", \"description\": \"Print"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "70104eb9-a8bd-42f3-81c9-79b8c5d1e511",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 1,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": " h"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "9941cb2e-4bee-49d5-9d2b-a65c4f6a9822",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 1,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": "i"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "5c463c6c-765c-4517-b089-323d0e3e04e1",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 1,
+				"delta": {
+					"type": "input_json_delta",
+					"partial_json": "\"}"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "10170684-4e03-4335-a7dc-fed86acb5824",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "assistant",
+			"message": {
+				"model": "claude-haiku-5-5",
+				"id": "msg_011CggRiKgpigb93tK6ra1Fs",
+				"type": "message",
+				"role": "assistant",
+				"content": [
+					{
+						"type": "tool_use",
+						"id": "toolu_01SfpGmPtD2MBXJaN7vT8Hd1",
+						"name": "Bash",
+						"input": {
+							"command": "echo hi",
+							"description": "Print hi"
+						},
+						"caller": {
+							"type": "direct"
+						}
+					}
+				],
+				"container": null,
+				"stop_reason": null,
+				"stop_sequence": null,
+				"stop_details": null,
+				"usage": {
+					"input_tokens": 2,
+					"cache_creation_input_tokens": 2633,
+					"cache_read_input_tokens": 0,
+					"cache_creation": {
+						"ephemeral_5m_input_tokens": 0,
+						"ephemeral_1h_input_tokens": 2633
+					},
+					"output_tokens": 32,
+					"service_tier": "standard",
+					"inference_geo": "global",
+					"speed": "standard"
+				},
+				"input_transformations": [],
+				"diagnostics": null,
+				"context_management": null
+			},
+			"parent_tool_use_id": null,
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"uuid": "111ffcc9-bcb4-40c6-a070-589bb846b187",
+			"timestamp": "2026-11-03T17:57:08.423Z",
+			"request_id": "req_011CggRiKSwRVnWZ5ALEAbPQ",
+			"wire_tool_inputs": {
+				"toolu_01SfpGmPtD2MBXJaN7vT8Hd1": {
+					"command": "echo hi",
+					"description": "Print hi"
+				}
+			}
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_stop",
+				"index": 1
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "3918cb51-db12-4092-a767-f464ce08db66",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "message_delta",
+				"delta": {
+					"stop_reason": "tool_use",
+					"stop_sequence": null,
+					"stop_details": null,
+					"container": null
+				},
+				"usage": {
+					"input_tokens": 2,
+					"cache_creation_input_tokens": 2633,
+					"cache_read_input_tokens": 0,
+					"output_tokens": 132,
+					"output_tokens_details": {
+						"thinking_tokens": 0
+					},
+					"iterations": [
+						{
+							"input_tokens": 2,
+							"output_tokens": 132,
+							"cache_read_input_tokens": 0,
+							"cache_creation_input_tokens": 2633,
+							"cache_creation": {
+								"ephemeral_5m_input_tokens": 0,
+								"ephemeral_1h_input_tokens": 2633
+							},
+							"type": "message"
+						}
+					]
+				},
+				"context_management": {
+					"applied_edits": []
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "2fa0b6b8-89ec-4cae-9014-5de27b024609",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "message_stop"
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "95743b4e-aaab-4dfe-bd65-d8bc45210154",
+			"api_message_id": "msg_011CggRiKgpigb93tK6ra1Fs"
+		}
+	},
+	{
+		"type": "tool-end",
+		"toolUseId": "toolu_01E1WdDXarCxnWr6buD9CKzH"
+	},
+	{
+		"type": "tool-start",
+		"toolUseId": "toolu_01SfpGmPtD2MBXJaN7vT8Hd1",
+		"name": "Bash"
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "user",
+			"message": {
+				"role": "user",
+				"content": [
+					{
+						"tool_use_id": "toolu_01E1WdDXarCxnWr6buD9CKzH",
+						"type": "tool_result",
+						"content": [
+							{
+								"type": "text",
+								"text": "Sunny in Paris"
+							}
+						]
+					}
+				]
+			},
+			"parent_tool_use_id": null,
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"uuid": "64ffd972-0066-4546-86fe-7f70bd3581c2",
+			"timestamp": "2026-11-03T17:57:09.846Z",
+			"tool_use_result": [
+				{
+					"type": "text",
+					"text": "Sunny in Paris"
+				}
+			],
+			"tool_result_meta": [
+				{
+					"id": "toolu_01E1WdDXarCxnWr6buD9CKzH",
+					"permission_decision": {
+						"decision": "accept",
+						"source": "hook",
+						"reason_type": "hook"
+					}
+				}
+			]
+		}
+	},
+	{
+		"type": "tool-end",
+		"toolUseId": "toolu_01SfpGmPtD2MBXJaN7vT8Hd1"
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "user",
+			"message": {
+				"role": "user",
+				"content": [
+					{
+						"tool_use_id": "toolu_01SfpGmPtD2MBXJaN7vT8Hd1",
+						"type": "tool_result",
+						"content": "hi",
+						"is_error": false
+					}
+				]
+			},
+			"parent_tool_use_id": null,
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"uuid": "7f8bfef0-56e4-4dfa-b602-2a229a89d036",
+			"timestamp": "2026-11-03T17:57:10.566Z",
+			"tool_use_result": {
+				"stdout": "hi",
+				"stderr": "",
+				"interrupted": false,
+				"isImage": false,
+				"noOutputExpected": false
+			},
+			"tool_result_meta": [
+				{
+					"id": "toolu_01SfpGmPtD2MBXJaN7vT8Hd1",
+					"permission_decision": {
+						"decision": "accept",
+						"source": "config",
+						"reason_type": "subcommandResults"
+					}
+				}
+			]
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "message_start",
+				"message": {
+					"model": "claude-haiku-5-5",
+					"id": "msg_011CggRiYprueYV8dAGEQjR7",
+					"type": "message",
+					"role": "assistant",
+					"content": [],
+					"container": null,
+					"stop_reason": null,
+					"stop_sequence": null,
+					"stop_details": null,
+					"usage": {
+						"input_tokens": 2,
+						"cache_creation_input_tokens": 234,
+						"cache_read_input_tokens": 2633,
+						"cache_creation": {
+							"ephemeral_5m_input_tokens": 0,
+							"ephemeral_1h_input_tokens": 234
+						},
+						"output_tokens": 4,
+						"service_tier": "standard",
+						"inference_geo": "global",
+						"speed": "standard"
+					},
+					"input_transformations": [],
+					"diagnostics": null,
+					"context_management": null
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "8c20bc29-eb3a-4111-927c-3c021025c7c5",
+			"ttft_ms": 560,
+			"thinking_display": "updates",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_start",
+				"index": 0,
+				"content_block": {
+					"type": "text",
+					"text": ""
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "224c5465-bd3e-4bad-8403-9cd81f289e8f",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 0,
+				"delta": {
+					"type": "text_delta",
+					"text": "Paris is"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "f4162361-fa33-45ff-8712-10aaea671b1f",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 0,
+				"delta": {
+					"type": "text_delta",
+					"text": " sunny, and `echo"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "9e9143ab-7e0a-4d8f-9348-383d53916a7a",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 0,
+				"delta": {
+					"type": "text_delta",
+					"text": " hi` print"
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "3e1cfe62-958e-42ad-8f1a-445e319d5306",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 0,
+				"delta": {
+					"type": "text_delta",
+					"text": "ed \""
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "1c8858f1-7ad6-452d-bcef-115b36bbe4d2",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_delta",
+				"index": 0,
+				"delta": {
+					"type": "text_delta",
+					"text": "hi\"."
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "0533e7bb-54a3-4891-9a20-603355b3ea03",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "assistant",
+			"message": {
+				"model": "claude-haiku-5-5",
+				"id": "msg_011CggRiYprueYV8dAGEQjR7",
+				"type": "message",
+				"role": "assistant",
+				"content": [
+					{
+						"type": "text",
+						"text": "Paris is sunny, and `echo hi` printed \"hi\"."
+					}
+				],
+				"container": null,
+				"stop_reason": null,
+				"stop_sequence": null,
+				"stop_details": null,
+				"usage": {
+					"input_tokens": 2,
+					"cache_creation_input_tokens": 234,
+					"cache_read_input_tokens": 2633,
+					"cache_creation": {
+						"ephemeral_5m_input_tokens": 0,
+						"ephemeral_1h_input_tokens": 234
+					},
+					"output_tokens": 4,
+					"service_tier": "standard",
+					"inference_geo": "global",
+					"speed": "standard"
+				},
+				"input_transformations": [],
+				"diagnostics": null,
+				"context_management": null
+			},
+			"parent_tool_use_id": null,
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"uuid": "4b6d0f3e-d55a-4f0e-845b-62396c79ddee",
+			"timestamp": "2026-11-03T17:57:11.194Z",
+			"request_id": "req_011CggRiYZyQaih37ahRnQu6"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "content_block_stop",
+				"index": 0
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "00898cf0-abd7-490e-a69a-0d63ad4b2e57",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "message_delta",
+				"delta": {
+					"stop_reason": "end_turn",
+					"stop_sequence": null,
+					"stop_details": null,
+					"container": null
+				},
+				"usage": {
+					"input_tokens": 2,
+					"cache_creation_input_tokens": 234,
+					"cache_read_input_tokens": 2633,
+					"output_tokens": 23,
+					"output_tokens_details": {
+						"thinking_tokens": 0
+					},
+					"iterations": [
+						{
+							"input_tokens": 2,
+							"output_tokens": 23,
+							"cache_read_input_tokens": 2633,
+							"cache_creation_input_tokens": 234,
+							"cache_creation": {
+								"ephemeral_5m_input_tokens": 0,
+								"ephemeral_1h_input_tokens": 234
+							},
+							"type": "message"
+						}
+					]
+				},
+				"context_management": {
+					"applied_edits": []
+				}
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "8072183c-1549-4cb0-9562-3957e48180b8",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"type": "stream_event",
+			"event": {
+				"type": "message_stop"
+			},
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"parent_tool_use_id": null,
+			"uuid": "d6b6e3d0-18a6-48fa-9f64-43eba1c75a84",
+			"api_message_id": "msg_011CggRiYprueYV8dAGEQjR7"
+		}
+	},
+	{
+		"type": "message",
+		"message": {
+			"duration_api_ms": 2454,
+			"stop_reason": "end_turn",
+			"session_id": "13e69802-7684-4309-9f6c-1bbfa75d9eba",
+			"total_cost_usd": 0.0008080300000000001,
+			"usage": {
+				"input_tokens": 4,
+				"cache_creation_input_tokens": 2867,
+				"cache_read_input_tokens": 2633,
+				"output_tokens": 155,
+				"output_tokens_details": {
+					"thinking_tokens": 0
+				},
+				"server_tool_use": {
+					"web_search_requests": 0,
+					"web_fetch_requests": 0
+				},
+				"service_tier": "standard",
+				"cache_creation": {
+					"ephemeral_1h_input_tokens": 2867,
+					"ephemeral_5m_input_tokens": 0
+				},
+				"inference_geo": "global",
+				"iterations": [
+					{
+						"input_tokens": 2,
+						"output_tokens": 23,
+						"cache_read_input_tokens": 2633,
+						"cache_creation_input_tokens": 234,
+						"cache_creation": {
+							"ephemeral_5m_input_tokens": 0,
+							"ephemeral_1h_input_tokens": 234
+						},
+						"type": "message"
+					}
+				],
+				"speed": "standard",
+				"fallback_credit": null
+			},
+			"modelUsage": {
+				"claude-haiku-5-5": {
+					"inputTokens": 1213,
+					"outputTokens": 174,
+					"cacheReadInputTokens": 2633,
+					"cacheCreationInputTokens": 2867,
+					"webSearchRequests": 0,
+					"costUSD": 0.0008080300000000001,
+					"contextWindow": 1000000,
+					"maxOutputTokens": 128000,
+					"thinkingTokens": 0,
+					"cacheCreationEphemeral5mInputTokens": 0,
+					"cacheCreationEphemeral1hInputTokens": 2867,
+					"canonicalModel": "claude-haiku-5-5",
+					"provider": "firstParty",
+					"costBasis": "list"
+				}
+			},
+			"permission_denials": [],
+			"terminal_reason": "completed",
+			"fast_mode_state": "off",
+			"fast_mode_disabled_reason": "sdk_opt_in_required",
+			"subagent_stats": {
+				"spawned": 0,
+				"requested": {
+					"background": 0,
+					"foreground": 0,
+					"unset": 0
+				},
+				"started_in_background": 0,
+				"max_depth": 0,
+				"spawned_by_subagents": 0,
+				"completed": 0,
+				"failed": 0,
+				"killed": {
+					"parent": 0,
+					"user": 0,
+					"system": 0
+				},
+				"refused": {
+					"depth_limit": 0,
+					"concurrency_limit": 0,
+					"budget": 0
+				},
+				"by_type": {}
+			},
+			"safety_stops": 0,
+			"is_error": false,
+			"num_turns": 3,
+			"subtype": "success",
+			"api_error_status": null,
+			"result": "Paris is sunny, and `echo hi` printed \"hi\".",
+			"ttft_ms": 880,
+			"type": "result",
+			"duration_ms": 3775,
+			"uuid": "2d334718-78d4-4d39-8ee2-2911583a63d4",
+			"ttft_stream_ms": 754,
+			"time_to_request_ms": 36,
+			"first_content_frame_ms": 754,
+			"queued_turn_count": 0,
+			"result_index": 0,
+			"model_usage_since_last_result": {
+				"claude-haiku-5-5": {
+					"inputTokens": 1213,
+					"outputTokens": 174,
+					"cacheReadInputTokens": 2633,
+					"cacheCreationInputTokens": 2867,
+					"webSearchRequests": 0,
+					"costUSD": 0.0008080300000000001,
+					"contextWindow": 1000000,
+					"maxOutputTokens": 128000,
+					"thinkingTokens": 0,
+					"cacheCreationEphemeral5mInputTokens": 0,
+					"cacheCreationEphemeral1hInputTokens": 2867,
+					"canonicalModel": "claude-haiku-5-5",
+					"provider": "firstParty",
+					"costBasis": "list"
+				}
+			}
+		}
+	}
+]

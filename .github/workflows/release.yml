@@ -1,0 +1,50 @@
+name: release
+
+on:
+  workflow_run:
+    workflows: [check]
+    types: [completed]
+    branches: [main, dev]
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release-${{ github.event.workflow_run.head_branch || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    env:
+      DRY_RUN: ${{ github.event_name != 'workflow_dispatch' || github.ref_name != 'main' }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          fetch-depth: 0
+
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+
+      - uses: ryangarber/rylease@v3
+        with:
+          dry-run: ${{ env.DRY_RUN }}
+          history: "[git/tags, { uses: fs/version-file, with: { format: npm } }]"
+          steps: |
+            - uses: conventional
+            - uses: fs/write-version
+              with: { format: npm }
+            - uses: fs/write-changes
+            - uses: git/commit
+            - uses: npm/publish
+              with: { provenance: true }
