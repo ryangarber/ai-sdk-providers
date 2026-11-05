@@ -36,6 +36,9 @@ jobs:
         with:
           cache: true
 
+      - name: Build
+        run: pnpm build
+
       - uses: ryangarber/rylease@v3
         with:
           dry-run: ${{ env.DRY_RUN }}
