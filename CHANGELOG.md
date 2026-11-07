@@ -1,3 +1,9 @@
+## v0.1.2 (2026-11-07)
+
+### Other
+
+- bump dependencies ([6c6fc4e](https://github.com/ryangarber/ai-sdk-providers/commit/6c6fc4e9fb02ed7580287616434a9c0217728f27))
+
 ## v0.1.1 (2026-11-07)
 
 ### Features
