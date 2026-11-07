@@ -38,7 +38,11 @@ export type ClaudeCodeResultBlock =
  */
 export type ClaudeCodeToolOutput = string | ClaudeCodeResultBlock[];
 
-/** What a subagent has done so far, as an `Agent` call's preliminary results. */
+/**
+ * What a subagent has done so far, as an `Agent` call's preliminary results.
+ * `streamText` drops `preliminary` from a provider's results, so tell these
+ * from the call's real result by their `type`.
+ */
 export interface ClaudeCodeSubagentProgress {
 	type: "subagent";
 	messages: ClaudeCodeSubagentMessage[];

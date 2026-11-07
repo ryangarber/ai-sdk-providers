@@ -36,6 +36,12 @@ import {
 
 /** How long a step waits, once only the caller can move it on, for anything else. */
 const SETTLE_MS = 50;
+/**
+ * How long after a result to look for the query a background task's
+ * notification starts, when no query has taken it in yet. Claude Code starts
+ * it at once; one that never comes was taken in by the query that ended.
+ */
+const OWED_MS = 1000;
 
 /** A step's end, as {@link LanguageModelV4StreamPart} metadata says what it waits on. */
 export type ClaudeCodeAwaiting =
@@ -112,6 +118,8 @@ interface Step {
 	/** Tool inputs streaming. */
 	inputs: Set<string>;
 	aborted: boolean;
+	/** Claude Code goes on after its result, with a query of its own. */
+	more?: boolean;
 }
 
 const usageOf = ({ start, delta }: Step["usage"]): LanguageModelV4Usage => {
@@ -240,7 +248,14 @@ export class Session {
 	>();
 	/** Built-ins running, by call. */
 	private running = new Set<string>();
+	/** A background task's notification no query has taken in yet. */
+	private owed = false;
+	/** Calls running in the background, their results placeholders. */
 	private background = new Set<string>();
+	/** Reports subagents handed back, by the call that started them. */
+	private handbacks = new Map<string, string>();
+	/** The calls tasks run for, by task. */
+	private tasks = new Map<string, string>();
 	private subagents = new Map<string, ClaudeCodeSubagentMessage[]>();
 	/** Messages streamed in parts, by id, whose whole messages add nothing. */
 	private streamed = new Set<string>();
@@ -540,7 +555,10 @@ export class Session {
 					break;
 				const { waiting, open, running } = this.tally();
 				if (!step.turnOpen) {
-					if (step.result) break;
+					if (step.result) {
+						if (this.owed) yield* this.awaitOwed(step);
+						break;
+					}
 					// Everything ran: the next turn is the next step's.
 					if (
 						step.sawTurn &&
@@ -585,6 +603,38 @@ export class Session {
 		}
 	}
 
+	/**
+	 * After a result, with a notification owed: whether Claude Code starts a
+	 * query for it, which is the next step's. What comes before is this one's.
+	 */
+	private async *awaitOwed(
+		step: Step,
+	): AsyncGenerator<LanguageModelV4StreamPart> {
+		const deadline = Date.now() + OWED_MS;
+		while (this.owed) {
+			const event = await this.next(
+				Math.max(0, deadline - Date.now()),
+				this.ctx.abortSignal,
+			);
+			if (event === "timeout" || event === "abort") break;
+			const starts =
+				event.type === "message" &&
+				((event.message.type === "system" &&
+					event.message.subtype === "init") ||
+					(event.message.type === "stream_event" &&
+						!event.message.parent_tool_use_id &&
+						event.message.event.type === "message_start"));
+			if (starts || event.type === "end") {
+				this.events.unshift(event);
+				step.more = event.type !== "end";
+				if (step.more) this.idle = false;
+				break;
+			}
+			yield* this.handle(event, step);
+		}
+		this.owed = false;
+	}
+
 	private async *handle(
 		event: ClaudeCodeHostEvent,
 		step: Step,
@@ -593,7 +643,7 @@ export class Session {
 			case "message":
 				if (this.ctx.includeRawChunks)
 					yield { type: "raw", rawValue: event.message };
-				yield* this.read(event.message, step);
+				yield* this.read(event.message, step, event.taskOutput);
 				return;
 			case "tool-call": {
 				const call = event.toolUseId && this.calls.get(event.toolUseId);
@@ -666,28 +716,47 @@ export class Session {
 	private *read(
 		message: SDKMessage,
 		step: Step,
+		output?: string,
 	): Generator<LanguageModelV4StreamPart> {
 		const parent =
 			"parent_tool_use_id" in message ? message.parent_tool_use_id : null;
 
 		if (message.type === "system") {
 			if (message.subtype === "init") {
+				// A query starts, taking in what was queued.
+				this.owed = false;
 				this.sessionId = message.session_id;
 				this.hooks.register(this);
 			} else if (message.subtype === "task_started") {
-				if (message.is_backgrounded && message.tool_use_id)
-					this.background.add(message.tool_use_id);
+				if (message.tool_use_id) {
+					this.tasks.set(message.task_id, message.tool_use_id);
+					if (message.is_backgrounded) this.background.add(message.tool_use_id);
+				}
+			} else if (message.subtype === "task_updated") {
+				// A foreground call sent to the background, its result a placeholder.
+				const call = this.tasks.get(message.task_id);
+				if (call && message.patch.is_backgrounded) this.background.add(call);
 			} else if (message.subtype === "task_notification") {
-				if (message.tool_use_id) this.background.delete(message.tool_use_id);
+				// A foreground call's result says it all, and comes after this.
+				if (
+					!message.tool_use_id ||
+					!this.background.delete(message.tool_use_id)
+				)
+					return;
+				// Claude Code takes it in, in a turn: work is coming.
+				this.idle = false;
+				this.owed = true;
 				yield {
 					type: "custom",
 					kind: "claude-code.task-notification",
 					providerMetadata: this.metadata({
 						toolCallId: message.tool_use_id,
+						toolName: this.calls.get(message.tool_use_id)?.toolName,
 						taskId: message.task_id,
 						status: message.status,
 						summary: message.summary,
 						outputFile: message.output_file,
+						...(output !== undefined && { output }),
 					}),
 				};
 			} else if (message.subtype === "compact_boundary") {
@@ -764,7 +833,13 @@ export class Session {
 					type: "tool-result",
 					toolCallId: call.id,
 					toolName: call.toolName,
-					result: json(toOutput(block.content)) as NonNullable<JSONValue>,
+					result: json(
+						// A report handed back is the subagent's result; Claude Code's
+						// says only where the model reads it.
+						this.handbacks.has(call.id)
+							? [{ type: "text", text: this.handbacks.get(call.id) as string }]
+							: toOutput(block.content),
+					) as NonNullable<JSONValue>,
 					...(block.is_error && { isError: true }),
 					...(call.dynamic && { dynamic: true }),
 					providerMetadata: this.metadata({
@@ -888,6 +963,11 @@ export class Session {
 					content.push({ type: "reasoning", text: block.thinking });
 				else if (block.type === "tool_use") {
 					const call = this.register(block.id, block.name, block.input, parent);
+					if (
+						block.name === "SubagentHandback" &&
+						typeof block.input?.message === "string"
+					)
+						this.handbacks.set(parent, block.input.message);
 					content.push({
 						type: "tool-call",
 						toolCallId: call.id,
@@ -1004,7 +1084,7 @@ export class Session {
 				: (finishReasons[step.stopReason ?? result.stop_reason ?? ""] ??
 					"stop");
 			if (unified === "tool-calls") unified = "stop";
-			if (this.background.size) awaiting.push("background");
+			if (this.background.size || step.more) awaiting.push("background");
 		} else if (step.aborted) unified = "other";
 		else if (this.ended) {
 			unified = "error";

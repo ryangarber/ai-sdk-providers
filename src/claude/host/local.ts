@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { access, constants } from "node:fs/promises";
+import { access, constants, open } from "node:fs/promises";
 import { homedir } from "node:os";
 import { delimiter, join } from "node:path";
 import {
@@ -543,13 +543,32 @@ export function createLocalHost(
 			void (async () => {
 				try {
 					run.query = query({ prompt: input.messages, options: sdkOptions });
+					/** Background shells' tasks, whose output only reaches a file. */
+					const shells = new Set<string>();
 					for await (const message of run.query) {
 						if (
 							message.type === "system" &&
-							message.subtype === "task_started" &&
-							message.tool_use_id
-						)
-							run.tasks.set(message.tool_use_id, message.task_id);
+							message.subtype === "task_started"
+						) {
+							if (message.tool_use_id)
+								run.tasks.set(message.tool_use_id, message.task_id);
+							if (message.task_type === "local_bash")
+								shells.add(message.task_id);
+						}
+						if (
+							message.type === "system" &&
+							message.subtype === "task_notification" &&
+							shells.delete(message.task_id) &&
+							message.output_file
+						) {
+							const taskOutput = await readTail(message.output_file);
+							onEvent({
+								type: "message",
+								message,
+								...(taskOutput !== undefined && { taskOutput }),
+							});
+							continue;
+						}
 						onEvent({ type: "message", message });
 					}
 				} catch (error) {
@@ -621,4 +640,28 @@ export function createLocalHost(
 			return !!info;
 		},
 	};
+}
+
+/** The most of a task's output shown: its end, as a shell's last lines matter most. */
+const TASK_OUTPUT_BYTES = 64 * 1024;
+
+/** A file's end, up to {@link TASK_OUTPUT_BYTES}; undefined if unreadable. */
+async function readTail(path: string): Promise<string | undefined> {
+	const file = await open(path).catch(() => undefined);
+	if (!file) return undefined;
+	try {
+		const { size } = await file.stat();
+		const length = Math.min(size, TASK_OUTPUT_BYTES);
+		const { buffer } = await file.read({
+			buffer: Buffer.alloc(length),
+			position: size - length,
+		});
+		const text = buffer.toString("utf8");
+		// Cut mid-line (or mid-character): start at the next whole line.
+		return size > length ? text.slice(text.indexOf("\n") + 1) : text;
+	} catch {
+		return undefined;
+	} finally {
+		await file.close();
+	}
 }

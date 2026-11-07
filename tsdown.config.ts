@@ -7,6 +7,8 @@ export default defineConfig({
 		"src/claude/local.ts",
 		"src/codex/index.ts",
 		"src/codex/local.ts",
+		"src/cursor/index.ts",
+		"src/cursor/local.ts",
 	],
 	format: "esm",
 	platform: "node",

@@ -277,6 +277,21 @@ const result = (session: string): ClaudeCodeHostEvent => ({
 	} as never,
 });
 
+/** One of Claude Code's `task_*` system messages, for task `t1`. */
+const task = (
+	subtype: "task_started" | "task_updated" | "task_notification",
+	fields: Record<string, unknown>,
+): ClaudeCodeHostEvent => ({
+	type: "message",
+	message: {
+		type: "system",
+		subtype,
+		task_id: "t1",
+		session_id: "s1",
+		...fields,
+	} as never,
+});
+
 const userResult = (
 	uuid: string,
 	id: string,
@@ -1005,6 +1020,198 @@ describe("claude/provider", () => {
 		expect(finishOf(parts).providerMetadata?.claudeCode).toMatchObject({
 			awaiting: ["continue"],
 		});
+	});
+
+	it("reports background work finishing, then streams the turn it brings", async () => {
+		const { host, runs } = fakeHost();
+		const model = createClaudeCode({ host })("haiku");
+		const prompt: LanguageModelV4Prompt = [user("Research")];
+		const first = await model.doStream(call({ prompt }));
+		const run = runs[0];
+		run.emit(
+			init("s1"),
+			...toolTurn("m1", "u1", { id: "ag", name: "Agent", input: {} }),
+			task("task_started", { tool_use_id: "ag", is_backgrounded: true }),
+			userResult("u2", "ag", [{ type: "text", text: "Launched" }]),
+			...textTurn("m2", "u3", "Waiting on it."),
+			result("s1"),
+		);
+		const launched = await read(first.stream);
+		prompt.push(toMessage(launched));
+		const waiting = await read((await model.doStream(call({ prompt }))).stream);
+		expect(finishOf(waiting).providerMetadata?.claudeCode).toMatchObject({
+			awaiting: ["background"],
+		});
+		prompt.push(toMessage(waiting));
+
+		const second = await model.doStream(call({ prompt }));
+		run.emit(
+			task("task_notification", {
+				tool_use_id: "ag",
+				status: "completed",
+				summary: "Found it",
+			}),
+		);
+		// Claude Code takes a moment to start the turn the notification brings.
+		setTimeout(
+			() => run.emit(...textTurn("m3", "u4", "It found it."), result("s1")),
+			20,
+		);
+		const next = await read(second.stream);
+		expect(next.filter((p) => p.type === "custom")[0]).toMatchObject({
+			kind: "claude-code.task-notification",
+			providerMetadata: {
+				claudeCode: {
+					toolCallId: "ag",
+					toolName: "Agent",
+					summary: "Found it",
+				},
+			},
+		});
+		expect(next).toContainEqual(
+			expect.objectContaining({ type: "text-delta", delta: "It found it." }),
+		);
+	});
+
+	it("gives a subagent's handed-back report as its call's result", async () => {
+		const { host, runs } = fakeHost();
+		const model = createClaudeCode({ host })("haiku");
+		const { stream } = await model.doStream(call({ prompt: [user("Look")] }));
+		runs[0].emit(
+			init("s1"),
+			...toolTurn("m1", "u1", { id: "ag", name: "Agent", input: {} }),
+			{
+				type: "message",
+				message: {
+					type: "assistant",
+					uuid: "sub1",
+					parent_tool_use_id: "ag",
+					message: {
+						id: "sm1",
+						content: [
+							{
+								type: "tool_use",
+								id: "hb",
+								name: "SubagentHandback",
+								input: { message: "The pages 404." },
+							},
+						],
+					},
+				} as never,
+			},
+			userResult("u2", "ag", [
+				{ type: "text", text: "This agent's report was delivered to you." },
+			]),
+			...textTurn("m2", "u3", "It failed."),
+			result("s1"),
+		);
+		const parts = await read(stream);
+		expect(parts).toContainEqual(
+			expect.objectContaining({
+				type: "tool-result",
+				toolCallId: "ag",
+				result: [{ type: "text", text: "The pages 404." }],
+			}),
+		);
+	});
+
+	it("goes on after a result for a notification no query took in", async () => {
+		const { host, runs } = fakeHost();
+		const model = createClaudeCode({ host })("haiku");
+		const prompt: LanguageModelV4Prompt = [user("Run it in the background")];
+		const first = await model.doStream(call({ prompt }));
+		const run = runs[0];
+		run.emit(
+			init("s1"),
+			...toolTurn("m1", "u1", { id: "sh", name: "Bash", input: {} }),
+			task("task_started", { tool_use_id: "sh", is_backgrounded: true }),
+			userResult("u2", "sh", "Running in the background."),
+		);
+		prompt.push(toMessage(await read(first.stream)));
+
+		const second = await model.doStream(call({ prompt }));
+		// It ends while the model is still saying it waits.
+		run.emit(
+			task("task_notification", { tool_use_id: "sh", status: "completed" }),
+			...textTurn("m2", "u3", "Still running."),
+			result("s1"),
+		);
+		// Then Claude Code takes it in with a query of its own.
+		setTimeout(
+			() =>
+				run.emit(
+					init("s1"),
+					...textTurn("m3", "u4", "It printed a.txt."),
+					result("s1"),
+				),
+			20,
+		);
+		const waiting = await read(second.stream);
+		expect(finishOf(waiting).providerMetadata?.claudeCode).toMatchObject({
+			awaiting: ["background"],
+		});
+		prompt.push(toMessage(waiting));
+
+		const third = await read((await model.doStream(call({ prompt }))).stream);
+		expect(third).toContainEqual(
+			expect.objectContaining({
+				type: "text-delta",
+				delta: "It printed a.txt.",
+			}),
+		);
+		expect(finishOf(third).providerMetadata?.claudeCode).toMatchObject({
+			awaiting: [],
+		});
+	});
+
+	it("ends at a result when the query took the notification in", async () => {
+		const { host, runs } = fakeHost();
+		const model = createClaudeCode({ host })("haiku");
+		const { stream } = await model.doStream(call({ prompt: [user("Go")] }));
+		runs[0].emit(
+			init("s1"),
+			task("task_started", { tool_use_id: "sh", is_backgrounded: true }),
+			task("task_notification", { tool_use_id: "sh", status: "completed" }),
+			...textTurn("m1", "u1", "It finished."),
+			result("s1"),
+		);
+		const parts = await read(stream);
+		expect(finishOf(parts).providerMetadata?.claudeCode).toMatchObject({
+			awaiting: [],
+		});
+	});
+
+	it("leaves a foreground task's notification to its call's result", async () => {
+		const { host, runs } = fakeHost();
+		const model = createClaudeCode({ host })("haiku");
+		const { stream } = await model.doStream(call({ prompt: [user("Run")] }));
+		runs[0].emit(
+			init("s1"),
+			...toolTurn("m1", "u1", { id: "sh", name: "Bash", input: {} }),
+			task("task_started", { tool_use_id: "sh", is_backgrounded: false }),
+			task("task_notification", {
+				tool_use_id: "sh",
+				status: "completed",
+				summary: "List files",
+			}),
+			userResult("u2", "sh", "a.txt"),
+			...textTurn("m2", "u3", "One file."),
+			result("s1"),
+		);
+		const parts = await read(stream);
+		expect(
+			parts.filter(
+				(p) =>
+					p.type === "custom" && p.kind === "claude-code.task-notification",
+			),
+		).toEqual([]);
+		expect(parts).toContainEqual(
+			expect.objectContaining({
+				type: "tool-result",
+				toolCallId: "sh",
+				result: "a.txt",
+			}),
+		);
 	});
 
 	it("interrupts the turn when the call is aborted", async () => {

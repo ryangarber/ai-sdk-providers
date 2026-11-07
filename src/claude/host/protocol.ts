@@ -153,7 +153,15 @@ export type ClaudeCodeToolContent =
 	| { type: "image"; data: string; mimeType: string };
 
 export type ClaudeCodeHostEvent =
-	| { type: "message"; message: SDKMessage }
+	| {
+			type: "message";
+			message: SDKMessage;
+			/**
+			 * With a background shell's `task_notification`: what its output
+			 * file holds (the end of it, when long), which only the host can read.
+			 */
+			taskOutput?: string;
+	  }
 	/** One of the caller's tools was called; answer with a `tool-result`. */
 	| {
 			type: "tool-call";
