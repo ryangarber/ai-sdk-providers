@@ -54,6 +54,9 @@
 	},
 	"author": "Ryan Garber",
 	"license": "MIT",
+	"repository": {
+		"url": "https://github.com/ryangarber/ai-sdk-providers.git"
+	},
 	"devEngines": {
 		"runtime": {
 			"name": "node",
@@ -63,21 +66,21 @@
 	},
 	"packageManager": "pnpm@12.16.1",
 	"devDependencies": {
-		"@biomejs/biome": "^2.6.4",
+		"@biomejs/biome": "^2.6.6",
 		"@types/node": "^26.6.6",
-		"ai": "7.0.158",
+		"ai": "7.0.164",
 		"knip": "^6.44.1",
-		"koffi": "^3.3.6",
-		"tsdown": "^0.23.4",
-		"typescript": "^7.0.2",
-		"vitest": "^5.0.5",
+		"koffi": "^3.3.7",
+		"tsdown": "^0.23.7",
+		"typescript": "7.1.0-beta",
+		"vitest": "^5.1.0",
 		"zod": "^4.6.7"
 	},
 	"dependencies": {
 		"@afmize/node": "^1.1.0",
-		"@ai-sdk/provider": "^4.0.35",
-		"@ai-sdk/provider-utils": "^5.0.72",
-		"@anthropic-ai/claude-agent-sdk": "^0.3.316",
+		"@ai-sdk/provider": "^4.0.36",
+		"@ai-sdk/provider-utils": "^5.0.75",
+		"@anthropic-ai/claude-agent-sdk": "^0.3.319",
 		"@cursor/sdk": "^1.3.1"
 	},
 	"peerDependencies": {
