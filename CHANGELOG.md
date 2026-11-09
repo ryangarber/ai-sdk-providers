@@ -1,3 +1,10 @@
+## v0.1.3 (2026-11-09)
+
+### Bug Fixes
+
+- **codex:** thread can continue without permission changes ([9022f55](https://github.com/ryangarber/ai-sdk-providers/commit/9022f55593f6b663601b476f4be126b7843b3060))
+- **cursor:** custom tool calls can never resolve ([9022f55](https://github.com/ryangarber/ai-sdk-providers/commit/9022f55593f6b663601b476f4be126b7843b3060))
+
 ## v0.1.2 (2026-11-07)
 
 ### Other
