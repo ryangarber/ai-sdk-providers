@@ -275,6 +275,99 @@ describe("cursor provider", () => {
 		expect(finishOf(rest).providerMetadata?.cursor?.route).toBe("continue");
 	});
 
+	it("hands back serial client calls while a built-in is open, without waiting for the announced count", async () => {
+		const fake = fakeHost();
+		const provider = createCursor({ host: fake.host });
+		const prompt: LanguageModelV4Prompt = [user("Weather and read a.txt")];
+		const next = () =>
+			provider("composer-2.5").doStream(call(prompt, { tools: [weather] }));
+		const reply = (parts: LanguageModelV4StreamPart[]) => {
+			const part = parts.find(
+				(part) => part.type === "tool-call" && !part.providerExecuted,
+			);
+			if (part?.type !== "tool-call") throw new Error("Missing client call");
+			prompt.push(
+				{
+					role: "assistant",
+					content: [
+						{
+							type: "tool-call",
+							toolCallId: part.toolCallId,
+							toolName: part.toolName,
+							input: JSON.parse(part.input),
+							providerOptions: part.providerMetadata,
+						},
+					],
+				},
+				{
+					role: "tool",
+					content: [
+						{
+							type: "tool-result",
+							toolCallId: part.toolCallId,
+							toolName: part.toolName,
+							output: { type: "text", value: "Sunny" },
+						},
+					],
+				},
+			);
+		};
+		const builtin = { type: "read", args: { path: "a.txt" } };
+		const first = clientCall("get_weather", { city: "Paris" });
+		const second = clientCall("get_weather", { city: "Oslo" });
+		const one = await next();
+		fake.emit(
+			delta({ type: "tool-requests-listed", callCount: 4 }),
+			started("r1", builtin),
+			started("c1", first),
+			{
+				type: "tool-call",
+				toolCallId: "c1",
+				name: "get_weather",
+				input: { city: "Paris" },
+			},
+		);
+		const parts = await read(one.stream);
+		expect(parts.filter((part) => part.type === "tool-result")).toHaveLength(0);
+		expect(finishOf(parts).providerMetadata?.cursor?.awaiting).toEqual([
+			"tools",
+		]);
+		reply(parts);
+		const two = await next();
+		// Cursor starts this only after the first answer, with no new listing.
+		fake.emit(started("c2", second), {
+			type: "tool-call",
+			toolCallId: "c2",
+			name: "get_weather",
+			input: { city: "Oslo" },
+		});
+		const more = await read(two.stream);
+		expect(more.find((part) => part.type === "tool-call")).toMatchObject({
+			toolCallId: "c2",
+		});
+		expect(finishOf(more).finishReason.unified).toBe("tool-calls");
+		reply(more);
+		const three = await next();
+		fake.emit(
+			completed("r1", {
+				...builtin,
+				result: { status: "success", value: { content: "hi" } },
+			}),
+			text("Done"),
+			...ended,
+		);
+		const rest = await read(three.stream);
+		expect(rest.find((part) => part.type === "tool-result")).toMatchObject({
+			toolCallId: "r1",
+		});
+		expect(finishOf(rest).finishReason.unified).toBe("stop");
+		expect(fake.answers.map((answer) => answer.toolCallId)).toEqual([
+			"c1",
+			"c2",
+		]);
+		await provider.close();
+	});
+
 	it("keeps an answer given before Cursor asks for it", async () => {
 		const fake = fakeHost();
 		const provider = createCursor({ host: fake.host });
@@ -372,6 +465,31 @@ describe("cursor provider", () => {
 		const finish = finishOf(parts);
 		expect(finish.finishReason.unified).toBe("tool-calls");
 		expect(finish.providerMetadata?.cursor?.awaiting).toEqual(["continue"]);
+	});
+
+	it("remembers a batch announced before its built-in starts", async () => {
+		const fake = fakeHost();
+		const provider = createCursor({ host: fake.host });
+		const { stream } = await provider("composer-2.5").doStream(
+			call([user("Read a.txt")]),
+		);
+		const toolCall = { type: "read", args: { path: "a.txt" } };
+		fake.emit(
+			listed,
+			started("r1", toolCall),
+			completed("r1", {
+				...toolCall,
+				result: { status: "success", value: { content: "hi" } },
+			}),
+		);
+		const parts = await read(stream);
+		expect(parts.find((part) => part.type === "tool-result")).toMatchObject({
+			toolCallId: "r1",
+		});
+		expect(finishOf(parts).providerMetadata?.cursor?.awaiting).toEqual([
+			"continue",
+		]);
+		await provider.close();
 	});
 
 	it("ends no step on calls only Cursor sees", async () => {

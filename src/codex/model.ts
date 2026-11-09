@@ -275,6 +275,10 @@ async function prepare(
 				dynamicTools: thread.dynamicTools,
 				config: thread.config,
 				ephemeral: thread.ephemeral,
+				// Set only as a thread starts: `turn/start` takes a whole policy
+				// in its place, not a mode. Another one starts another thread.
+				sandbox: thread.sandbox,
+				permissions: thread.permissions,
 			}),
 		),
 		applyPatch,

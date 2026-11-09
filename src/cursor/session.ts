@@ -416,7 +416,15 @@ export class Session {
 					break;
 				}
 				yield* this.handle(event, step);
-				if (step.listed && !this.openCalls()) step.done = true;
+				// Cursor can wait for a custom result before starting another
+				// call or announcing the batch. Hand it back immediately; the
+				// next step collects whatever comes after it, including built-ins
+				// still open. The batch's count can include invisible SDK calls.
+				if (
+					[...this.calls.values()].some((call) => call.state === "waiting") ||
+					(step.calls && step.listed && !this.openCalls())
+				)
+					step.done = true;
 			}
 			yield* this.finish(step);
 		} finally {
@@ -510,10 +518,10 @@ export class Session {
 	): Generator<LanguageModelV4StreamPart> {
 		// Not typed by the SDK: the model call's tool calls were all made.
 		if ((update as { type: string }).type === "tool-requests-listed") {
-			// Calls only Cursor sees, such as looking up MCP tools, end no step.
-			if (!step.calls) return;
-			yield* this.endBlock(step);
+			// Remember announcements before calls start as well. Calls only
+			// Cursor sees end no step: the stream also requires a visible call.
 			step.listed = true;
+			yield* this.endBlock(step);
 			return;
 		}
 		switch (update.type) {
@@ -661,7 +669,10 @@ export class Session {
 						: "error";
 			if (result.status === "error")
 				error ??= result.error ?? "The run failed.";
-		} else if (step.listed) {
+		} else if (
+			step.listed ||
+			[...this.calls.values()].some((call) => call.state === "waiting")
+		) {
 			unified = "tool-calls";
 			awaiting.push(
 				[...this.calls.values()].some((call) => call.state === "waiting")
