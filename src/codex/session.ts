@@ -1397,6 +1397,15 @@ export class Session {
 		const requestId = message.id as CodexRequestId;
 		const respond = (response: CodexResponse) =>
 			void this.host.respond(requestId, response).catch(() => {});
+		// Asked after its step ended, and answered by the next call before this
+		// step took the request in.
+		const key = params.itemId ? approvalKey(params) : params.callId;
+		const early = typeof key === "string" ? this.early.get(key) : undefined;
+		if (early) {
+			this.early.delete(key as string);
+			respond(early);
+			return;
+		}
 		switch (message.method) {
 			case "item/tool/call": {
 				const known = this.ctx.tools.some((tool) => tool.name === params.tool);

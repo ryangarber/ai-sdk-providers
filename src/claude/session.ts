@@ -252,6 +252,17 @@ export class Session {
 	private owed = false;
 	/** Calls running in the background, their results placeholders. */
 	private background = new Set<string>();
+	/**
+	 * A turn was interrupted: its query's result, an error saying it stopped, is
+	 * the aborted step's and not the next one's. `sent` once the caller sent
+	 * more, which a query of its own takes in after it.
+	 */
+	private interrupted?: { sent: boolean };
+	/**
+	 * A notification of a task from a run before this one, which a resumed
+	 * session replays: the query it starts ends at once, with no turns.
+	 */
+	private stale = false;
 	/** Reports subagents handed back, by the call that started them. */
 	private handbacks = new Map<string, string>();
 	/** The calls tasks run for, by task. */
@@ -375,7 +386,17 @@ export class Session {
 			);
 		}
 		const content = await this.ctx.toBlocks(tail.messages);
-		if (content.length) this.idle = false;
+		// Picked up with nothing new after it stopped, as after an abort: it goes
+		// on as it would have, as a new session told nothing new does.
+		if (
+			!content.length &&
+			(this.interrupted || (this.idle && !this.background.size && !this.owed))
+		)
+			content.push({ type: "text", text: "Continue." });
+		if (content.length) {
+			this.idle = false;
+			if (this.interrupted) this.interrupted.sent = true;
+		}
 		if (content.length && this.run)
 			await this.host.send(this.run, {
 				type: "user",
@@ -647,7 +668,13 @@ export class Session {
 				return;
 			case "tool-call": {
 				const call = event.toolUseId && this.calls.get(event.toolUseId);
-				if (call) this.questions.set(call.id, event.id);
+				// Asked after its step ended, and answered by the next call before
+				// this step took the question in.
+				const early = call && this.early.get(call.id);
+				if (call && early) {
+					this.early.delete(call.id);
+					if (this.run) await this.host.answer(this.run, event.id, early);
+				} else if (call) this.questions.set(call.id, event.id);
 				else if (this.run)
 					await this.host.answer(this.run, event.id, {
 						type: "tool-result",
@@ -669,6 +696,13 @@ export class Session {
 							type: "permission",
 							result: { behavior: "allow" },
 						});
+					return;
+				}
+				const early = this.early.get(call.id);
+				if (early) {
+					this.early.delete(call.id);
+					this.asks.delete(call.id);
+					if (this.run) await this.host.answer(this.run, event.id, early);
 					return;
 				}
 				this.questions.set(call.id, event.id);
@@ -723,8 +757,10 @@ export class Session {
 
 		if (message.type === "system") {
 			if (message.subtype === "init") {
-				// A query starts, taking in what was queued.
+				// A query starts, taking in what was queued. One interrupted ended
+				// before it, whether its result was seen or not.
 				this.owed = false;
+				this.interrupted = undefined;
 				this.sessionId = message.session_id;
 				this.hooks.register(this);
 			} else if (message.subtype === "task_started") {
@@ -737,12 +773,27 @@ export class Session {
 				const call = this.tasks.get(message.task_id);
 				if (call && message.patch.is_backgrounded) this.background.add(call);
 			} else if (message.subtype === "task_notification") {
-				// A foreground call's result says it all, and comes after this.
-				if (
-					!message.tool_use_id ||
-					!this.background.delete(message.tool_use_id)
-				)
+				if (!message.tool_use_id) return;
+				if (!this.background.delete(message.tool_use_id)) {
+					// A foreground call's result says it all, and comes after this.
+					if (this.calls.has(message.tool_use_id)) return;
+					// A task of a run before this one, which a resumed session
+					// reports stopped: its call is settled, but no turn comes of it.
+					this.stale = true;
+					yield {
+						type: "custom",
+						kind: "claude-code.task-notification",
+						providerMetadata: this.metadata({
+							toolCallId: message.tool_use_id,
+							taskId: message.task_id,
+							status: message.status,
+							summary: message.summary,
+							outputFile: message.output_file,
+							...(output !== undefined && { output }),
+						}),
+					};
 					return;
+				}
 				// Claude Code takes it in, in a turn: work is coming.
 				this.idle = false;
 				this.owed = true;
@@ -854,6 +905,19 @@ export class Session {
 		}
 
 		if (message.type === "result") {
+			// The interrupted query's end, which the aborted step said already.
+			if (this.interrupted) {
+				if (!this.interrupted.sent) this.idle = true;
+				this.interrupted = undefined;
+				return;
+			}
+			// The empty query a stale notification started: what was sent is
+			// taken in by the next.
+			if (this.stale && !message.is_error && message.num_turns === 0) {
+				this.stale = false;
+				return;
+			}
+			this.stale = false;
 			step.result = message;
 			this.idle = true;
 		}
@@ -866,6 +930,7 @@ export class Session {
 		switch (event.type) {
 			case "message_start": {
 				this.idle = false;
+				this.stale = false;
 				step.sawTurn = true;
 				step.turnOpen = true;
 				step.usage.start = event.message?.usage;
@@ -1032,6 +1097,8 @@ export class Session {
 		for (const id of step.inputs) yield { type: "tool-input-end", id };
 
 		if (step.aborted && this.run) {
+			// A query running ends with a result of its own, once interrupted.
+			if (!this.idle) this.interrupted = { sent: false };
 			await_(this.host.interrupt(this.run));
 			// What waited on the caller is refused: the turn is over.
 			for (const [id, question] of this.questions) {
@@ -1089,6 +1156,10 @@ export class Session {
 		else if (this.ended) {
 			unified = "error";
 			error ??= "Claude Code ended unexpectedly.";
+		} else if (this.idle && !waiting) {
+			// Done with its turns, with nothing to go on with.
+			unified = "stop";
+			if (this.background.size) awaiting.push("background");
 		} else {
 			unified = "tool-calls";
 			const kinds = new Set(

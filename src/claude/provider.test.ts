@@ -1228,6 +1228,175 @@ describe("claude/provider", () => {
 		expect(finishOf(parts).finishReason.unified).toBe("other");
 	});
 
+	it("answers a call whose question came only after its step ended", async () => {
+		const { host, runs } = fakeHost();
+		const model = createClaudeCode({ host })("haiku");
+		const prompt: LanguageModelV4Prompt = [user("Weather in Paris")];
+		const first = await model.doStream(call({ prompt, tools: [weather] }));
+		const run = runs[0];
+		const id = "toolu_w";
+		run.emit(
+			init("s1"),
+			...toolTurn("m1", "u1", {
+				id,
+				name: "mcp__ai-sdk__get_weather",
+				input: { city: "Paris" },
+			}),
+		);
+		const step1 = await read(first.stream);
+		// Claude Code asks once the step is over, while the caller runs the tool.
+		run.emit({
+			type: "tool-call",
+			id: "q1",
+			toolUseId: id,
+			name: "get_weather",
+			input: { city: "Paris" },
+		});
+		const second = await model.doStream(
+			call({
+				prompt: [
+					...prompt,
+					toMessage(step1),
+					{
+						role: "tool",
+						content: [
+							{
+								type: "tool-result",
+								toolCallId: id,
+								toolName: "get_weather",
+								output: { type: "text", value: "Rainy" },
+							},
+						],
+					},
+				],
+				tools: [weather],
+			}),
+		);
+		const answered = run.answered("q1");
+		const reading = read(second.stream);
+		expect(await answered).toMatchObject({
+			type: "tool-result",
+			content: [{ type: "text", text: "Rainy" }],
+		});
+		run.emit(...textTurn("m2", "u2", "Rainy."), result("s1"));
+		expect(finishOf(await reading).finishReason.unified).toBe("stop");
+	});
+
+	it("leaves an interrupted query's result to the step that was aborted", async () => {
+		for (const said of [user("Go on"), undefined]) {
+			const { host, runs } = fakeHost();
+			const model = createClaudeCode({ host })("haiku");
+			const prompt: LanguageModelV4Prompt = [user("Sleep")];
+			const abort = new AbortController();
+			const first = await model.doStream(
+				call({ prompt, abortSignal: abort.signal }),
+			);
+			const run = runs[0];
+			run.emit(
+				init("s1"),
+				...toolTurn("m1", "u1", { id: "sh", name: "Bash", input: {} }),
+				{ type: "tool-start", toolUseId: "sh", name: "Bash" },
+			);
+			setTimeout(() => abort.abort(), 5);
+			prompt.push(toMessage(await read(first.stream)));
+			// The interrupted query ends with an error of its own.
+			run.emit(userResult("u2", "sh", "Interrupted", true), {
+				type: "message",
+				message: {
+					type: "result",
+					subtype: "error_during_execution",
+					is_error: true,
+					errors: ["[ede_diagnostic] result_type=user"],
+					session_id: "s1",
+					stop_reason: "tool_use",
+					num_turns: 1,
+					usage: {},
+				} as never,
+			});
+			if (said) prompt.push(said);
+			const second = await model.doStream(call({ prompt }));
+			setTimeout(
+				() =>
+					run.emit(
+						init("s1"),
+						...textTurn("m2", "u3", "Going on."),
+						result("s1"),
+					),
+				20,
+			);
+			const parts = await read(second.stream);
+			expect(parts.filter((p) => p.type === "error")).toEqual([]);
+			expect(parts).toContainEqual(
+				expect.objectContaining({ type: "text-delta", delta: "Going on." }),
+			);
+			// With nothing new, it is told to go on.
+			expect((run.sent[0] as any).message.content).toEqual([
+				{ type: "text", text: said ? "Go on" : "Continue." },
+			]);
+		}
+	});
+
+	it("skips the empty query a resumed session's stale notification starts", async () => {
+		const { host, runs } = fakeHost(["s0"]);
+		const model = createClaudeCode({ host })("haiku");
+		const { stream } = await model.doStream(
+			call({
+				prompt: [
+					user("Run it in the background"),
+					{
+						role: "assistant",
+						content: [
+							{
+								type: "text",
+								text: "Started.",
+								providerOptions: {
+									claudeCode: { sessionId: "s0", cursor: "c0" },
+								},
+							},
+						],
+					},
+					user("Continue"),
+				],
+			}),
+		);
+		runs[0].emit(
+			task("task_notification", { tool_use_id: "old", status: "stopped" }),
+			init("s1"),
+			{
+				type: "message",
+				message: {
+					type: "result",
+					subtype: "success",
+					is_error: false,
+					session_id: "s1",
+					stop_reason: null,
+					num_turns: 0,
+					usage: {},
+				} as never,
+			},
+			init("s1"),
+			...textTurn("m1", "u1", "It was stopped."),
+			result("s1"),
+		);
+		const parts = await read(stream);
+		expect(parts).toContainEqual(
+			expect.objectContaining({
+				type: "custom",
+				kind: "claude-code.task-notification",
+				providerMetadata: {
+					claudeCode: expect.objectContaining({
+						toolCallId: "old",
+						status: "stopped",
+					}),
+				},
+			}),
+		);
+		expect(parts).toContainEqual(
+			expect.objectContaining({ type: "text-delta", delta: "It was stopped." }),
+		);
+		expect(finishOf(parts).finishReason.unified).toBe("stop");
+	});
+
 	it("aggregates a step in doGenerate", async () => {
 		const { host, runs } = fakeHost();
 		const model = createClaudeCode({ host })("haiku");
