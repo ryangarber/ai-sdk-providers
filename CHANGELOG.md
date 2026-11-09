@@ -1,3 +1,9 @@
+## v0.1.4 (2026-11-09)
+
+### Bug Fixes
+
+- prevent race condition in native tool results ([c30e3c2](https://github.com/ryangarber/ai-sdk-providers/commit/c30e3c238814f610eade75cf1aeb4284287c1bdf))
+
 ## v0.1.3 (2026-11-09)
 
 ### Bug Fixes
