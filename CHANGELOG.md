@@ -1,3 +1,9 @@
+## v0.1.5 (2026-11-11)
+
+### Bug Fixes
+
+- find executables on windows paths ([e08da52](https://github.com/ryangarber/ai-sdk-providers/commit/e08da52e13b769e2283b50a333c548e896299b1a))
+
 ## v0.1.4 (2026-11-09)
 
 ### Bug Fixes
