@@ -1,8 +1,9 @@
 import { type ChildProcess, execFile, spawn } from "node:child_process";
-import { access, constants, readdir, readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { delimiter, join } from "node:path";
+import { join } from "node:path";
 import { createInterface } from "node:readline";
+import { findOnPath, isExecutable } from "../../shared/executable.ts";
 import type {
 	CodexModel,
 	CodexResponseItem,
@@ -71,15 +72,6 @@ const exec = (file: string, args: string[], env: Env) =>
 		),
 	);
 
-const isExecutable = async (file: string) => {
-	try {
-		await access(file, constants.X_OK);
-		return true;
-	} catch {
-		return false;
-	}
-};
-
 class RpcError extends Error {
 	readonly code?: number;
 	readonly data?: unknown;
@@ -127,18 +119,7 @@ export function createLocalHost(
 	const findExecutable = async (chosen = settings.executable?.trim()) => {
 		if (chosen) return (await isExecutable(chosen)) ? chosen : undefined;
 		found ??= (async () => {
-			const env = await getEnv();
-			const name = process.platform === "win32" ? "codex.exe" : "codex";
-			const candidates = [
-				...(env.PATH ?? "")
-					.split(delimiter)
-					.filter(Boolean)
-					.map((dir) => join(dir, name)),
-				...KNOWN_PATHS,
-			];
-			for (const candidate of candidates)
-				if (await isExecutable(candidate)) return candidate;
-			return undefined;
+			return await findOnPath("codex", await getEnv(), KNOWN_PATHS);
 		})();
 		const file = await found;
 		// Looked for again next time: it may be installed meanwhile.

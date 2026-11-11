@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
-import { access, constants, open } from "node:fs/promises";
+import { open } from "node:fs/promises";
 import { homedir } from "node:os";
-import { delimiter, join } from "node:path";
+import { join } from "node:path";
 import {
 	type CanUseTool,
 	createSdkMcpServer,
@@ -17,6 +17,7 @@ import {
 	tool,
 } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
+import { findOnPath, isExecutable } from "../../shared/executable.ts";
 import type {
 	ClaudeCodeHost,
 	ClaudeCodeHostAnswer,
@@ -94,15 +95,6 @@ const exec = (file: string, args: string[], env: Env) =>
 			(error, stdout) => (error ? reject(error) : resolve(stdout)),
 		),
 	);
-
-const isExecutable = async (file: string) => {
-	try {
-		await access(file, constants.X_OK);
-		return true;
-	} catch {
-		return false;
-	}
-};
 
 /** A JSON schema as the zod shape the SDK takes tools' inputs as. */
 const toShape = (schema: unknown) => {
@@ -210,18 +202,7 @@ export function createLocalHost(
 	const findExecutable = async (chosen = settings.executable?.trim()) => {
 		if (chosen) return (await isExecutable(chosen)) ? chosen : undefined;
 		found ??= (async () => {
-			const env = await getEnv();
-			const name = process.platform === "win32" ? "claude.exe" : "claude";
-			const candidates = [
-				...(env.PATH ?? "")
-					.split(delimiter)
-					.filter(Boolean)
-					.map((dir) => join(dir, name)),
-				...KNOWN_PATHS,
-			];
-			for (const candidate of candidates)
-				if (await isExecutable(candidate)) return candidate;
-			return undefined;
+			return await findOnPath("claude", await getEnv(), KNOWN_PATHS);
 		})();
 		const file = await found;
 		// Looked for again next time: it may be installed meanwhile.
