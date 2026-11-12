@@ -17,7 +17,7 @@ import {
 	tool,
 } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
-import { findOnPath, isExecutable } from "../../shared/executable.ts";
+import { findOnPath, resolveProgram } from "../../shared/executable.ts";
 import type {
 	ClaudeCodeHost,
 	ClaudeCodeHostAnswer,
@@ -200,7 +200,7 @@ export function createLocalHost(
 
 	let found: Promise<string | undefined> | undefined;
 	const findExecutable = async (chosen = settings.executable?.trim()) => {
-		if (chosen) return (await isExecutable(chosen)) ? chosen : undefined;
+		if (chosen) return await resolveProgram(chosen);
 		found ??= (async () => {
 			return await findOnPath("claude", await getEnv(), KNOWN_PATHS);
 		})();

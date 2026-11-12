@@ -1,9 +1,15 @@
 import { type ChildProcess, execFile, spawn } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
-import { findOnPath, isExecutable } from "../../shared/executable.ts";
+import {
+	findOnPath,
+	isExecutable,
+	resolveProgram,
+	type ShimResolver,
+} from "../../shared/executable.ts";
 import type {
 	CodexModel,
 	CodexResponseItem,
@@ -62,6 +68,32 @@ const KNOWN_PATHS = [
 	"/usr/local/bin/codex",
 ];
 
+/**
+ * The native `codex` that npm's launcher (`@openai/codex/bin/codex.js`, what
+ * a global install's `codex.cmd` runs) starts: its platform package's, else
+ * one vendored beside it.
+ */
+const codexBinary: ShimResolver = async (script) => {
+	if (!/[\\/]codex\.js$/i.test(script)) return undefined;
+	const triple = {
+		x64: "x86_64-pc-windows-msvc",
+		arm64: "aarch64-pc-windows-msvc",
+	}[process.arch as string];
+	if (!triple) return undefined;
+	const roots = [join(dirname(script), "..", "vendor")];
+	try {
+		const pkg = createRequire(script).resolve(
+			`@openai/codex-win32-${process.arch}/package.json`,
+		);
+		roots.unshift(join(dirname(pkg), "vendor"));
+	} catch {}
+	for (const root of roots) {
+		const file = join(root, triple, "bin", "codex.exe");
+		if (await isExecutable(file)) return file;
+	}
+	return undefined;
+};
+
 const exec = (file: string, args: string[], env: Env) =>
 	new Promise<string>((resolve, reject) =>
 		execFile(
@@ -117,9 +149,14 @@ export function createLocalHost(
 
 	let found: Promise<string | undefined> | undefined;
 	const findExecutable = async (chosen = settings.executable?.trim()) => {
-		if (chosen) return (await isExecutable(chosen)) ? chosen : undefined;
+		if (chosen) return await resolveProgram(chosen, codexBinary);
 		found ??= (async () => {
-			return await findOnPath("codex", await getEnv(), KNOWN_PATHS);
+			return await findOnPath(
+				"codex",
+				await getEnv(),
+				KNOWN_PATHS,
+				codexBinary,
+			);
 		})();
 		const file = await found;
 		// Looked for again next time: it may be installed meanwhile.
