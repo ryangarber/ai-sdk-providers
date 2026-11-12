@@ -1,3 +1,9 @@
+## v0.1.6 (2026-11-12)
+
+### Bug Fixes
+
+- follow .cmd shims on windows ([0466fe9](https://github.com/ryangarber/ai-sdk-providers/commit/0466fe9ffe6e3a04b26ecd3fb0a383c9924238b4))
+
 ## v0.1.5 (2026-11-11)
 
 ### Bug Fixes
