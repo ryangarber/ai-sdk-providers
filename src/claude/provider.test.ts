@@ -1397,6 +1397,62 @@ describe("claude/provider", () => {
 		expect(finishOf(parts).finishReason.unified).toBe("stop");
 	});
 
+	it("skips the empty query of stale notifications that name only their tasks", async () => {
+		const { host, runs } = fakeHost(["s0"]);
+		const model = createClaudeCode({ host })("haiku");
+		const { stream } = await model.doStream(
+			call({
+				prompt: [
+					user("Run two in the background"),
+					{
+						role: "assistant",
+						content: [
+							{
+								type: "text",
+								text: "Started.",
+								providerOptions: {
+									claudeCode: { sessionId: "s0", cursor: "c0" },
+								},
+							},
+						],
+					},
+					user("What is their status?"),
+				],
+			}),
+		);
+		// Killed with the run before: reported by task alone, both in one query.
+		runs[0].emit(
+			task("task_notification", { task_id: "a1", status: "failed" }),
+			task("task_notification", { task_id: "a2", status: "failed" }),
+			init("s1"),
+			{
+				type: "message",
+				message: {
+					type: "result",
+					subtype: "success",
+					is_error: false,
+					session_id: "s1",
+					stop_reason: null,
+					num_turns: 0,
+					usage: {},
+				} as never,
+			},
+			init("s1"),
+			...textTurn("m1", "u1", "Both failed."),
+			result("s1"),
+		);
+		const parts = await read(stream);
+		const notifications = parts.filter(
+			(part) =>
+				part.type === "custom" && part.kind === "claude-code.task-notification",
+		);
+		expect(notifications).toHaveLength(2);
+		expect(parts).toContainEqual(
+			expect.objectContaining({ type: "text-delta", delta: "Both failed." }),
+		);
+		expect(finishOf(parts).finishReason.unified).toBe("stop");
+	});
+
 	it("aggregates a step in doGenerate", async () => {
 		const { host, runs } = fakeHost();
 		const model = createClaudeCode({ host })("haiku");

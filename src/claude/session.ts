@@ -259,10 +259,10 @@ export class Session {
 	 */
 	private interrupted?: { sent: boolean };
 	/**
-	 * A notification of a task from a run before this one, which a resumed
-	 * session replays: the query it starts ends at once, with no turns.
+	 * Notifications of tasks from a run before this one, which a resumed
+	 * session replays: the queries they start end at once, with no turns.
 	 */
-	private stale = false;
+	private stale = 0;
 	/** Reports subagents handed back, by the call that started them. */
 	private handbacks = new Map<string, string>();
 	/** The calls tasks run for, by task. */
@@ -773,18 +773,19 @@ export class Session {
 				const call = this.tasks.get(message.task_id);
 				if (call && message.patch.is_backgrounded) this.background.add(call);
 			} else if (message.subtype === "task_notification") {
-				if (!message.tool_use_id) return;
-				if (!this.background.delete(message.tool_use_id)) {
+				// One of a run before this one says only its task.
+				const id = message.tool_use_id ?? this.tasks.get(message.task_id);
+				if (!id || !this.background.delete(id)) {
 					// A foreground call's result says it all, and comes after this.
-					if (this.calls.has(message.tool_use_id)) return;
+					if (id && this.calls.has(id)) return;
 					// A task of a run before this one, which a resumed session
 					// reports stopped: its call is settled, but no turn comes of it.
-					this.stale = true;
+					this.stale++;
 					yield {
 						type: "custom",
 						kind: "claude-code.task-notification",
 						providerMetadata: this.metadata({
-							toolCallId: message.tool_use_id,
+							...(id && { toolCallId: id }),
 							taskId: message.task_id,
 							status: message.status,
 							summary: message.summary,
@@ -801,8 +802,8 @@ export class Session {
 					type: "custom",
 					kind: "claude-code.task-notification",
 					providerMetadata: this.metadata({
-						toolCallId: message.tool_use_id,
-						toolName: this.calls.get(message.tool_use_id)?.toolName,
+						toolCallId: id,
+						toolName: this.calls.get(id)?.toolName,
 						taskId: message.task_id,
 						status: message.status,
 						summary: message.summary,
@@ -914,10 +915,10 @@ export class Session {
 			// The empty query a stale notification started: what was sent is
 			// taken in by the next.
 			if (this.stale && !message.is_error && message.num_turns === 0) {
-				this.stale = false;
+				this.stale--;
 				return;
 			}
-			this.stale = false;
+			this.stale = 0;
 			step.result = message;
 			this.idle = true;
 		}
@@ -930,7 +931,7 @@ export class Session {
 		switch (event.type) {
 			case "message_start": {
 				this.idle = false;
-				this.stale = false;
+				this.stale = 0;
 				step.sawTurn = true;
 				step.turnOpen = true;
 				step.usage.start = event.message?.usage;
