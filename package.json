@@ -1,6 +1,6 @@
 {
 	"name": "@ryangarber/ai-sdk-providers",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"description": "A collection of providers for AI SDK.",
 	"files": [
 		"dist"

@@ -1,3 +1,9 @@
+## v0.1.7 (2026-11-14)
+
+### Bug Fixes
+
+- **claude:** match part to task, drop empty parts ([e10aabe](https://github.com/ryangarber/ai-sdk-providers/commit/e10aabe92a75f1f3e35a7fb4eb567ec1ced255af))
+
 ## v0.1.6 (2026-11-12)
 
 ### Bug Fixes
