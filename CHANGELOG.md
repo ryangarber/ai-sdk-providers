@@ -1,3 +1,9 @@
+## v0.1.8 (2026-11-17)
+
+### Bug Fixes
+
+- **codex:** always end step when all tool calls return ([2b31481](https://github.com/ryangarber/ai-sdk-providers/commit/2b3148179a847b22d7a0a772297572096fef2649))
+
 ## v0.1.7 (2026-11-14)
 
 ### Bug Fixes
