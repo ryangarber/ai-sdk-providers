@@ -475,6 +475,63 @@ describe("codex/provider", () => {
 		});
 	});
 
+	it("hands over the caller's calls while a command runs on in the background", async () => {
+		const fake = fakeHost();
+		const model = createCodex({ host: fake.host })("gpt-test", {
+			builtinTools: ["exec_command"],
+		});
+		const tools = [weather];
+		const prompt: LanguageModelV4Prompt = [user("Serve it, then check")];
+		const first = await model.doStream(options(prompt, { tools }));
+		const t = on("thread-1", "turn-1");
+		// A dev server: its output goes back to the model, its item never ends.
+		fake.emit(
+			t.turnStarted(),
+			...script(t, "call-exec", "resp-1"),
+			t.started({
+				type: "commandExecution",
+				id: "exec-server",
+				command: "pnpm dev",
+				cwd: "/w",
+				commandActions: [],
+				status: "inProgress",
+				aggregatedOutput: null,
+				exitCode: null,
+			}),
+			t.raw({
+				type: "custom_tool_call_output",
+				call_id: "call-exec",
+				output: "Process running with session ID 1",
+			}),
+		);
+		const parts = await read(first.stream);
+		expect(finishOf(parts).finishReason.unified).toBe("tool-calls");
+
+		prompt.push(toMessage(parts));
+		const second = await model.doStream(options(prompt, { tools }));
+		fake.emit(
+			...script(t, "call-exec-2", "resp-2"),
+			t.started({
+				type: "dynamicToolCall",
+				id: "exec-weather",
+				tool: "get_weather",
+				arguments: { city: "Paris" },
+				status: "inProgress",
+			}),
+			t.request(3, "item/tool/call", {
+				callId: "exec-weather",
+				tool: "get_weather",
+				arguments: { city: "Paris" },
+			}),
+		);
+		const next = await read(second.stream);
+		expect(next.filter((p) => p.type === "tool-call")).toMatchObject([
+			{ toolCallId: "exec-weather", toolName: "get_weather" },
+		]);
+		expect(finishOf(next).finishReason.unified).toBe("tool-calls");
+		expect(codexMeta(next).awaiting).toEqual(["tools"]);
+	});
+
 	it("asks for approval in the same step as the call, again if it must", async () => {
 		const fake = fakeHost();
 		const tools = [

@@ -817,6 +817,18 @@ export class Session {
 		for (const pending of this.pending.values())
 			if (pending.params?.threadId && pending.params.threadId !== this.threadId)
 				childWaiting = true;
+		const background = [...this.children.values()].filter(
+			(child) => child.status === "running",
+		).length;
+		// Every call the model still waits on waits on the caller: what runs
+		// on (a dev server left in the background, say) already gave the model
+		// its output, and its item only ends with its process.
+		const ownWaiting = [...this.pending.values()].filter(
+			(pending) =>
+				!pending.params?.threadId || pending.params.threadId === this.threadId,
+		).length;
+		if (ownWaiting && this.openCalls.size <= ownWaiting)
+			return { waiting, running: 0, background };
 		let running = 0;
 		for (const id of this.running) {
 			const call = this.calls.get(id);
@@ -825,9 +837,6 @@ export class Session {
 			if (childWaiting && call.name === "wait_agent") continue;
 			running++;
 		}
-		const background = [...this.children.values()].filter(
-			(child) => child.status === "running",
-		).length;
 		return { waiting, running, background };
 	}
 

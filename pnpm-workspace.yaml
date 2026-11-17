@@ -3,3 +3,4 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - "@afmize/*"
   - "@ryangarber/*"
+virtualStoreType: global
