@@ -1,3 +1,9 @@
+## v0.1.9 (2026-11-20)
+
+### Other
+
+- bump dependencies ([237f242](https://github.com/ryangarber/ai-sdk-providers/commit/237f2425b359ffabfc765da33d7422845407b2e3))
+
 ## v0.1.8 (2026-11-17)
 
 ### Bug Fixes
