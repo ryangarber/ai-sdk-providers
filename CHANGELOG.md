@@ -1,3 +1,9 @@
+## v0.2.0 (2026-11-24)
+
+### Breaking Changes
+
+- move sdk fallbacks to ./local, make main bundle browser safe ([6cb8219](https://github.com/ryangarber/ai-sdk-providers/commit/6cb8219749cca7250fc83bd8a15c6bb9046fda23))
+
 ## v0.1.9 (2026-11-20)
 
 ### Other
