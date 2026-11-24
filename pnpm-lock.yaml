@@ -217,7 +217,7 @@ importers:
         specifier: ^3.3.8
         version: 3.3.8
       node:
-        specifier: runtime:26.13.1
+        specifier: runtime:>=24 <27
         version: runtime:26.13.1
       tsdown:
         specifier: ^0.23.7
