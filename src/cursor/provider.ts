@@ -35,19 +35,16 @@ export interface CursorProvider extends ProviderV4 {
  * where it left. Runs in this process by default (Node and Bun), or in any
  * host given.
  */
-export function createCursor(
-	settings: CursorProviderSettings = {},
-): CursorProvider {
+export function createCursor(settings: CursorProviderSettings): CursorProvider {
 	let host: Promise<CursorHost> | undefined;
 	const getHost = () =>
 		(host ??= (async () => {
 			const chosen = settings.host;
 			if (typeof chosen === "function") return chosen();
 			if (chosen) return chosen;
-			// Imported only when used, so a bundle that brings its own host
-			// never loads the Cursor SDK.
-			const { createLocalHost } = await import("./host/local.ts");
-			return createLocalHost({ apiKey: settings.apiKey });
+			throw new Error(
+				"Missing host. Use `createLocalHost()` or `connectCursorHost(channel)`.",
+			);
 		})());
 	const registry = new SessionRegistry();
 
@@ -85,6 +82,3 @@ export function createCursor(
 		},
 	});
 }
-
-/** Cursor in this process, on `CURSOR_API_KEY` or a saved login. */
-export const cursor: CursorProvider = createCursor();

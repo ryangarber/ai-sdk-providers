@@ -6,6 +6,7 @@
  */
 import { type ModelMessage, streamText, tool } from "ai";
 import { z } from "zod";
+import { createLocalHost } from "#codex/local.ts";
 import { createCodex } from "#codex/provider.ts";
 
 const cwd = process.argv[2] ?? "/tmp/codex-e2e";
@@ -25,9 +26,9 @@ const time = tool({
 
 const baseTools = {
 	get_weather: weather,
-	shell: createCodex().tools.execCommand({}),
-	patch: createCodex().tools.applyPatch({}),
-	ask: createCodex().tools.requestUserInput({}),
+	shell: createCodex({ host: createLocalHost() }).tools.execCommand({}),
+	patch: createCodex({ host: createLocalHost() }).tools.applyPatch({}),
+	ask: createCodex({ host: createLocalHost() }).tools.requestUserInput({}),
 };
 
 /** Runs the conversation on until Codex is done with the turn. */
@@ -133,7 +134,7 @@ async function turn(
 	}
 }
 
-const codex = createCodex();
+const codex = createCodex({ host: createLocalHost() });
 console.log(await codex.status());
 const messages: ModelMessage[] = [
 	{
@@ -212,7 +213,7 @@ await turn(codex, messages, "C", { ...baseTools, get_time: time });
 await codex.close();
 
 // A new provider has no live thread: the next turn rebuilds the saved one.
-const later = createCodex();
+const later = createCodex({ host: createLocalHost() });
 messages.push({
 	role: "user",
 	content: "What did I say I prefer, and what was in notes.txt? One line.",

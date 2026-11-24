@@ -45,19 +45,16 @@ export interface CodexProvider extends ProviderV4 {
  * left. Runs `codex` from this process by default (Node and Bun), or in any
  * host given.
  */
-export function createCodex(
-	settings: CodexProviderSettings = {},
-): CodexProvider {
+export function createCodex(settings: CodexProviderSettings): CodexProvider {
 	let host: Promise<CodexHost> | undefined;
 	const getHost = () =>
 		(host ??= (async () => {
 			const chosen = settings.host;
 			if (typeof chosen === "function") return chosen();
 			if (chosen) return chosen;
-			// Imported only when used, so a bundle that brings its own host
-			// never loads Node's modules.
-			const { createLocalHost } = await import("./host/local.ts");
-			return createLocalHost();
+			throw new Error(
+				"Missing host. Use `createLocalHost()` or `connectCodexHost(channel)`.",
+			);
 		})());
 	const registry = new SessionRegistry();
 
@@ -98,6 +95,3 @@ export function createCodex(
 		},
 	});
 }
-
-/** Codex from this process, on the installed `codex`. */
-export const codex: CodexProvider = createCodex();

@@ -7,6 +7,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { type ModelMessage, streamText, tool } from "ai";
 import { z } from "zod";
+import { createLocalHost } from "#cursor/local.ts";
 import { createCursor } from "#cursor/provider.ts";
 
 const cwd = process.argv[2] ?? "/tmp/cursor-e2e";
@@ -19,7 +20,7 @@ const tools = {
 		description: "The weather in a city",
 		inputSchema: z.object({ city: z.string() }),
 	}),
-	read: createCursor().tools.read({}),
+	read: createCursor({ host: createLocalHost() }).tools.read({}),
 };
 
 /** Runs the conversation on until Cursor is done with the turn. */
@@ -87,7 +88,7 @@ async function turn(
 	}
 }
 
-const cursor = createCursor();
+const cursor = createCursor({ host: createLocalHost() });
 const status = await cursor.status();
 console.log(
 	`[status] loggedIn=${status.loggedIn} models=${status.models?.length}${status.error ? ` error=${status.error}` : ""}`,
@@ -110,7 +111,7 @@ await turn(cursor, messages, "B");
 await cursor.close();
 
 // A new provider has no open agent: the next turn resumes the saved one.
-const later = createCursor();
+const later = createCursor({ host: createLocalHost() });
 messages.push({ role: "user", content: "What was the secret word? One word." });
 await turn(later, messages, "C");
 

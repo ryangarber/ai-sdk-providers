@@ -5,6 +5,7 @@
  */
 import { type ModelMessage, streamText, tool } from "ai";
 import { z } from "zod";
+import { createLocalHost } from "#claude/local.ts";
 import { createClaudeCode } from "#claude/provider.ts";
 
 const cwd = process.argv[2] ?? "/tmp/cc-e2e";
@@ -17,9 +18,9 @@ const tools = {
 		description: "The weather in a city",
 		inputSchema: z.object({ city: z.string() }),
 	}),
-	Bash: createClaudeCode().tools.bash({}),
-	Write: createClaudeCode().tools.write({}),
-	ask: createClaudeCode().tools.askUserQuestion({}),
+	Bash: createClaudeCode({ host: createLocalHost() }).tools.bash({}),
+	Write: createClaudeCode({ host: createLocalHost() }).tools.write({}),
+	ask: createClaudeCode({ host: createLocalHost() }).tools.askUserQuestion({}),
 };
 
 /** Runs the conversation on until Claude Code is done with the turn. */
@@ -102,7 +103,7 @@ async function turn(
 	}
 }
 
-const claudeCode = createClaudeCode();
+const claudeCode = createClaudeCode({ host: createLocalHost() });
 const messages: ModelMessage[] = [
 	{
 		role: "user",
@@ -121,7 +122,7 @@ await turn(claudeCode, messages, "B");
 await claudeCode.close();
 
 // A new provider has no live session: the next turn forks the saved one.
-const later = createClaudeCode();
+const later = createClaudeCode({ host: createLocalHost() });
 messages.push({ role: "user", content: "What did I say I prefer? One word." });
 await turn(later, messages, "C");
 await later.close();

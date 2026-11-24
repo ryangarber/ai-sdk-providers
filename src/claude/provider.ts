@@ -44,7 +44,7 @@ export interface ClaudeCodeProvider extends ProviderV4 {
  * Runs in this process by default (Node and Bun), or in any host given.
  */
 export function createClaudeCode(
-	settings: ClaudeCodeProviderSettings = {},
+	settings: ClaudeCodeProviderSettings,
 ): ClaudeCodeProvider {
 	let host: Promise<ClaudeCodeHost> | undefined;
 	const getHost = () =>
@@ -52,10 +52,9 @@ export function createClaudeCode(
 			const chosen = settings.host;
 			if (typeof chosen === "function") return chosen();
 			if (chosen) return chosen;
-			// Imported only when used, so a bundle that brings its own host
-			// never loads the Agent SDK.
-			const { createLocalHost } = await import("./host/local.ts");
-			return createLocalHost();
+			throw new Error(
+				"Missing host. Use `createLocalHost()` or `connectClaudeCodeHost(channel)`.",
+			);
 		})());
 	const registry = new SessionRegistry();
 
@@ -99,6 +98,3 @@ export function createClaudeCode(
 		},
 	});
 }
-
-/** Claude Code in this process, on the installed `claude`. */
-export const claudeCode: ClaudeCodeProvider = createClaudeCode();
